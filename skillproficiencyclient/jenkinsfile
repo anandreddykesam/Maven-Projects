@@ -1,0 +1,106 @@
+pipeline {
+    agent any
+    
+    tools{
+        maven 'maven3'
+    }
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                echo 'Cloning GitHub repo'
+                
+                git branch: 'main', url: 'https://github.com/anandreddykesam/Maven-Projects.git'
+            }
+        }
+    
+   
+        stage('SonarQube Analysis') {
+            steps {
+                dir('skillproficiencyclient') {
+                    sh '''
+            
+                    ls -lrt
+                    echo "Token length: ${#SONAR_TOKEN}"
+                    
+                    mvn clean verify sonar:sonar \
+                    -Dsonar.host.url=http://13.203.220.145:9000 \
+                    -Dsonar.token=squ_9f671d8817aa3e3682658e30a557d451d6f6a496
+                    '''
+                     }
+            }
+        }
+
+         stage('Building Artifactory') {
+                steps {
+                     sh '''
+                        cd skillproficiencyclient
+                        mvn clean package
+                             '''
+                     }
+            }
+    
+        stage('Build Docker Image') {
+            steps {
+                dir('skillproficiencyclient') {
+                        sh '''
+                        docker build -t skillproficiencyclient:${BUILD_NUMBER} .
+                        docker tag skillproficiencyclient:${BUILD_NUMBER} anandkesam/skillproficiencyclient:${BUILD_NUMBER}'''
+                        
+                    }
+                    echo 'Built Docker Image'
+                }               
+              
+            }
+   
+
+        stage('Push Image to Docker Hub') {
+            steps {
+                echo 'Pushing Docker Image'
+                
+                withCredentials([string(credentialsId: 'dockerhub', variable: 'dockerhub')]) {
+                 sh 'docker login -u anandkesam -p ${dockerhub}'
+                }
+                
+                sh 'docker push anandkesam/skillproficiencyclient:${BUILD_NUMBER}'
+                
+                echo 'Pushed Docker Image'
+            }
+        }
+    
+    
+    
+        stage('Update Deployment File') {
+            environment {
+                    GIT_REPO_NAME = "Maven-Projects"
+                    GIT_USER_NAME = "anandreddykesam"
+                    }
+                    
+            steps {
+                echo 'Updating Deployment File'
+                withCredentials([string(credentialsId: 'githubtoken', variable: 'githubtoken')]) {
+                    sh '''
+                    #Configure git user
+                    
+                    git config --global user.email "anandreddykesam@gmail.com"
+                    git config --global user.name "anandreddykesam"
+                    
+                    git config --list
+                    
+                    #Replace the tag in the deployment YAML file with the current build number
+                    
+                    sed -i "s|skillproficiencyclient:.*|skillproficiencyclient:${BUILD_NUMBER}|g" \
+        skillproficiencyclient/deploymentfiles/deployment.yml
+
+                    git add skillproficiencyclient/deploymentfiles/deployment.yml
+
+                    git commit -m "Update deployment image to version ${BUILD_NUMBER}" || true
+
+                    git push https://${githubtoken}@github.com/anandreddykesam/Maven-Projects.git HEAD:main'''
+                }
+                
+                sh 'Deployment File Updated'
+            }
+        }
+    }
+}
