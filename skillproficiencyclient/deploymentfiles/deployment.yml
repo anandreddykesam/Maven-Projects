@@ -1,0 +1,24 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skillset
+  labels:
+    app: skillset
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: skillset
+  template:
+    metadata:
+      labels:
+        app: skillset
+    spec:
+      containers:
+      - name: skillset
+        image: anandkesam/skillset:xyz
+        ports:
+        - containerPort: 8080
+
+  
