@@ -2,22 +2,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: skillset
+  name: skillproficiencyclient
   labels:
-    app: skillset
+    app: skillproficiencyclient
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: skillset
+      app: skillproficiencyclient
   template:
     metadata:
       labels:
-        app: skillset
+        app: skillproficiencyclient
     spec:
       containers:
-      - name: skillset
-        image: anandkesam/skillset:xyz
+      - name: skillproficiencyclient
+        image: anandkesam/skillproficiencyclient:xyz
         ports:
         - containerPort: 8080
 
