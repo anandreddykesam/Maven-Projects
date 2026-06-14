@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: skillproficiencyclient
-        image: anandkesam/skillproficiencyclient:17
+        image: anandkesam/skillproficiencyclient:18
         ports:
         - containerPort: 8080
 
