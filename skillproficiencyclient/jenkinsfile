@@ -99,7 +99,7 @@ pipeline {
                     git push https://${githubtoken}@github.com/anandreddykesam/Maven-Projects.git HEAD:main'''
                 }
                 
-                sh 'Deployment File Updated'
+                echo 'Deployment File Updated'
             }
         }
     }
